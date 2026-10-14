@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Вход | My Garden{% endblock %}
+
+{% block content %}
+<section class="form-card">
+    <h1>Вход в аккаунт</h1>
+    <p>Войди в свой аккаунт My Garden.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('main.login') }}">
+        <label for="email">Электронная почта</label>
+        <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="name@example.com"
+            required
+            autocomplete="email"
+        >
+
+        <label for="password">Пароль</label>
+        <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Введите пароль"
+            required
+            autocomplete="current-password"
+        >
+
+        <button class="button" type="submit">Войти</button>
+    </form>
+
+    <p>Нет аккаунта?
+        <a href="{{ url_for('main.register') }}">Зарегистрироваться</a>
+    </p>
+</section>
+{% endblock %}
+```

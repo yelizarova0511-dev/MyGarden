@@ -1,0 +1,71 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Регистрация | My Garden{% endblock %}
+
+{% block content %}
+<section class="form-card">
+    <h1>Создание аккаунта</h1>
+    <p>Зарегистрируйся, чтобы пользоваться My Garden.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('main.register') }}">
+        <label for="username">Имя пользователя</label>
+        <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Ваше имя"
+            required
+            maxlength="50"
+            autocomplete="username"
+        >
+
+        <label for="email">Электронная почта</label>
+        <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="name@example.com"
+            required
+            autocomplete="email"
+        >
+
+        <label for="password">Пароль</label>
+        <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Не менее 8 символов"
+            required
+            minlength="8"
+            autocomplete="new-password"
+        >
+
+        <label for="password_confirm">Повтори пароль</label>
+        <input
+            id="password_confirm"
+            name="password_confirm"
+            type="password"
+            placeholder="Повтори пароль"
+            required
+            minlength="8"
+            autocomplete="new-password"
+        >
+
+        <button class="button" type="submit">
+            Зарегистрироваться
+        </button>
+    </form>
+
+    <p>Уже есть аккаунт?
+        <a href="{{ url_for('main.login') }}">Войти</a>
+    </p>
+</section>
+{% endblock %}
+```

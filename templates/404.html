@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Страница не найдена | My Garden{% endblock %}
+{% block content %}
+<section class="page-card"><h1>Страница не найдена</h1><p>Возможно, адрес указан неправильно или страница ещё не создана.</p><a class="button" href="{{ url_for('main.index') }}">Вернуться на главную</a></section>
+{% endblock %}

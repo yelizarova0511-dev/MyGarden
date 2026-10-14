@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет — My Garden{% endblock %}
+
+{% block content %}
+
+<section class="profile-hero">
+    <div class="profile-hero-content">
+        <p class="eyebrow">
+            <span class="status-dot"></span>
+            MY GARDEN · ЛИЧНЫЙ КАБИНЕТ
+        </p>
+
+        <h1>Твой сад начинается здесь.</h1>
+
+        <p class="profile-hero-text">
+            Добро пожаловать, <strong>Ульяна!</strong>
+            Управляй своими участками, следи за растениями
+            и создавай сад своей мечты.
+        </p>
+    </div>
+
+    <div class="profile-hero-mark" aria-hidden="true">
+        <svg viewBox="0 0 120 120" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M60 94V40"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"/>
+            <path d="M60 62C39 62 27 48 29 28C49 28 62 40 60 62Z"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linejoin="round"/>
+            <path d="M60 76C81 76 93 62 91 42C71 42 58 54 60 76Z"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linejoin="round"/>
+            <path d="M43 103H77"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"/>
+        </svg>
+    </div>
+</section>
+
+<section class="profile-welcome">
+    <div class="profile-welcome-main">
+        <p class="eyebrow">ТВОЁ ПРОСТРАНСТВО</p>
+        <h2>Мой профиль</h2>
+        <p>
+            Рады видеть тебя в My Garden!
+            Здесь собраны основные разделы твоего сада.
+        </p>
+    </div>
+
+    <div class="profile-user">
+        <div class="profile-avatar">У</div>
+        <div>
+            <p class="profile-user-label">ТВОЙ ПРОФИЛЬ</p>
+            <h3>Ульяна</h3>
+        </div>
+    </div>
+</section>
+
+<section class="profile-inspiration">
+    <div class="inspiration-symbol" aria-hidden="true">✳</div>
+
+    <div>
+        <p class="eyebrow">ВДОХНОВЕНИЕ ДНЯ</p>
+        <h2>Большой сад начинается с маленького семечка.</h2>
+    </div>
+</section>
+
+<section class="profile-sections">
+    <div class="section-heading">
+        <p class="eyebrow">ВСЁ ДЛЯ ТВОЕГО САДА</p>
+        <h2>Мои разделы</h2>
+        <p>Выбери, чем займёмся сегодня.</p>
+    </div>
+
+    <div class="profile-cards">
+
+        <a class="profile-card profile-card-link"
+           href="{{ url_for('main.plots') }}">
+            <span class="profile-card-number">01</span>
+            <div class="profile-card-icon" aria-hidden="true">⌂</div>
+
+            <h3>Мои участки</h3>
+
+            <p>
+                Добавляй садовые участки, указывай площадь
+                и сохраняй информацию о каждом из них.
+            </p>
+
+            <span class="profile-card-action">Открыть участки</span>
+        </a>
+
+        <a class="profile-card profile-card-link"
+           href="{{ url_for('main.plants') }}">
+            <span class="profile-card-number">02</span>
+            <div class="profile-card-icon" aria-hidden="true">✿</div>
+
+            <h3>Мои растения</h3>
+
+            <p>
+                Собирай коллекцию растений и культур,
+                указывай даты посадки и добавляй заметки об уходе.
+            </p>
+
+            <span class="profile-card-action">Открыть растения</span>
+        </a>
+
+        <div class="profile-card profile-card-disabled">
+            <span class="profile-card-number">03</span>
+            <div class="profile-card-icon" aria-hidden="true">□</div>
+
+            <h3>Мои заказы</h3>
+
+            <p>
+                В будущем здесь появятся покупки,
+                история заказов и информация об их статусах.
+            </p>
+
+            <span class="profile-card-action">Скоро появится</span>
+        </div>
+
+    </div>
+</section>
+
+<section class="profile-tip">
+    <div class="profile-tip-mark" aria-hidden="true">i</div>
+
+    <div>
+        <p class="eyebrow">СОВЕТ ДЛЯ ТВОЕГО САДА</p>
+        <h2>Маленькие записи помогают большому урожаю.</h2>
+        <p>
+            Регулярно записывай информацию об участках
+            и растениях. Так будет проще планировать посадки
+            и ухаживать за будущим урожаем.
+        </p>
+    </div>
+</section>
+
+{% endblock %}
+```

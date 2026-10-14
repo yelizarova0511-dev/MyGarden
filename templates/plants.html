@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Мои растения | My Garden{% endblock %}
+
+{% block content %}
+<div class="garden-page">
+
+    <section class="garden-hero">
+        <div class="garden-badge">MY GARDEN / РАСТЕНИЯ</div>
+        <h1>Мои растения</h1>
+        <p>Добавляй культуры, планируй посадки и следи за будущим урожаем.</p>
+
+        <div class="garden-actions">
+            <a class="garden-button garden-button-light"
+               href="{{ url_for('main.profile') }}">
+                В личный кабинет
+            </a>
+            <a class="garden-button"
+               href="{{ url_for('main.plots') }}">
+                Мои участки
+            </a>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="garden-panel">
+        <div class="garden-panel-heading">
+            <span class="garden-pixel-icon">▦</span>
+            <div>
+                <h2>Добавить растение</h2>
+                <p>Заполни информацию о новой культуре.</p>
+            </div>
+        </div>
+
+        <form class="garden-form"
+              method="POST"
+              action="{{ url_for('main.plants') }}">
+
+            <label for="name">Название растения</label>
+            <input
+                id="name"
+                name="name"
+                type="text"
+                maxlength="100"
+                placeholder="Например, Томат"
+                required
+            >
+
+            <label for="category">Вид культуры</label>
+            <select id="category" name="category" required>
+                <option value="">Выбери категорию овощей</option>
+                <option value="Томаты">Томаты</option>
+                <option value="Огурцы">Огурцы</option>
+                <option value="Перец">Перец</option>
+                <option value="Капуста">Капуста</option>
+                <option value="Морковь">Морковь</option>
+                <option value="Свёкла">Свёкла</option>
+                <option value="Картофель">Картофель</option>
+                <option value="Тыква">Тыква</option>
+            </select>
+
+            <label for="variety">Сорт растения</label>
+            <select id="variety" name="variety" required>
+                <option value="">Сначала выбери культуру</option>
+            </select>
+
+            <label for="plot_id">К какому участку относится?</label>
+            <select id="plot_id" name="plot_id">
+                <option value="">Пока без участка</option>
+                {% for plot in plots %}
+                    <option value="{{ plot.id }}">{{ plot.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="planting_date">Дата посадки</label>
+            <input
+                id="planting_date"
+                name="planting_date"
+                type="date"
+            >
+
+            <label for="notes">Заметки</label>
+            <textarea
+                id="notes"
+                name="notes"
+                rows="3"
+                maxlength="1000"
+                placeholder="Например, поливать каждый вечер"
+            ></textarea>
+
+            <button class="garden-button" type="submit">
+                + Добавить растение
+            </button>
+        </form>
+    </section>
+
+    <div class="garden-section-heading">
+        <div>
+            <span class="garden-eyebrow">МОЯ КОЛЛЕКЦИЯ</span>
+            <h2>Сохранённые растения</h2>
+        </div>
+        <span class="garden-count">{{ plants|length }}</span>
+    </div>
+
+    {% if plants %}
+        <div class="garden-grid">
+            {% for plant in plants %}
+                <section class="garden-plot-card">
+
+                    <div class="garden-plot-top">
+                        <span class="garden-plot-icon"></span>
+                        <span class="garden-plot-label">МОЁ РАСТЕНИЕ</span>
+                    </div>
+
+                    <h3>{{ plant.name }}</h3>
+
+                    <div class="garden-area">
+                        <span>КАТЕГОРИЯ</span>
+                        <strong>{{ plant.category }}</strong>
+                    </div>
+
+                    <div class="garden-area">
+                        <span>СОРТ</span>
+                        <strong>{{ plant.variety or 'Не указан' }}</strong>
+                    </div>
+
+                    <div class="garden-plant-details">
+                        <p>
+                            <strong>Участок:</strong>
+                            {% if plant.plot_name %}
+                                {{ plant.plot_name }}
+                            {% else %}
+                                Не указан
+                            {% endif %}
+                        </p>
+
+                        {% if plant.planting_date %}
+                            <p>
+                                <strong>Дата посадки:</strong>
+                                {{ plant.planting_date }}
+                            </p>
+                        {% endif %}
+
+                        <p>
+                            <strong>Заметки:</strong>
+                            {% if plant.notes %}
+                                {{ plant.notes }}
+                            {% else %}
+                                Пока не добавлены
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('main.delete_plant', plant_id=plant.id) }}"
+                        onsubmit="return confirm('Точно удалить это растение?');"
+                    >
+                        <button class="garden-delete" type="submit">
+                            Удалить растение
+                        </button>
+                    </form>
+
+                </section>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="garden-empty">
+            <div class="garden-empty-icon"></div>
+            <h3>Коллекция пока пуста</h3>
+            <p>Добавь первое растение с помощью формы выше.</p>
+        </section>
+    {% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const category = document.getElementById("category");
+    const variety = document.getElementById("variety");
+
+    const varieties = {
+        "Томаты": [
+            "Бычье сердце",
+            "Санька",
+            "Помидоры черри"
+        ],
+        "Огурцы": [
+            "Нежинский",
+            "Муромский",
+            "Вязниковский"
+        ],
+        "Перец": [
+            "Ласточка",
+            "Калифорнийское чудо",
+            "Подарок Молдовы"
+        ],
+        "Капуста": [
+            "Слава",
+            "Надежда",
+            "Подарок"
+        ],
+        "Морковь": [
+            "Нантская",
+            "Шантане",
+            "Королева осени"
+        ],
+        "Свёкла": [
+            "Бордо",
+            "Египетская плоская",
+            "Цилиндра"
+        ],
+        "Картофель": [
+            "Невский",
+            "Удача",
+            "Беллароза"
+        ],
+        "Тыква": [
+            "Россиянка",
+            "Улыбка",
+            "Волжская серая"
+        ]
+    };
+
+    function updateVarieties() {
+        const selectedCategory = category.value;
+        const options = varieties[selectedCategory] || [];
+
+        variety.replaceChildren();
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = options.length
+            ? "Выбери сорт"
+            : "Сначала выбери культуру";
+
+        variety.appendChild(placeholder);
+
+        options.forEach(function (name) {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            variety.appendChild(option);
+        });
+    }
+
+    category.addEventListener("change", updateVarieties);
+    updateVarieties();
+});
+</script>
+{% endblock %}

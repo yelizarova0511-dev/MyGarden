@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}My Garden — свой урожай без лишних забот{% endblock %}
+
+{% block content %}
+
+<section class="hero hero-minimal">
+    <div class="hero-content">
+        <p class="eyebrow">
+            <span class="status-dot"></span>
+            ВАШ САД. НАША ЗАБОТА.
+        </p>
+
+        <h1>Свой урожай.<br>Без лишних забот.</h1>
+
+        <p class="hero-text">
+            Выберите участок и любимые культуры.
+            Мы позаботимся о выращивании, а вы получите
+            урожай без ежедневных хлопот.
+        </p>
+
+        <div class="hero-actions">
+    <a class="button"
+       href="{{ url_for('main.register') }}"
+       style="transition: opacity 0.25s ease;"
+       onmouseover="this.style.opacity='0.65'"
+       onmouseout="this.style.opacity='1'">
+        Выбрать участок
+    </a>
+
+    <a class="button button-secondary"
+       href="{{ url_for('main.about') }}"
+       style="transition: opacity 0.25s ease;"
+       onmouseover="this.style.opacity='0.65'"
+       onmouseout="this.style.opacity='1'">
+        Как это работает
+    </a>
+</div>
+        <p class="hero-note">
+            Продуманный уход · Ваш выбор · Урожай в свой сезон
+        </p>
+    </div>
+
+    <div class="hero-mark" aria-hidden="true">
+        <div class="hero-mark-circle">
+            <svg viewBox="0 0 120 120" fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M60 94V40"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"/>
+                <path d="M60 62C39 62 27 48 29 28C49 28 62 40 60 62Z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"/>
+                <path d="M60 76C81 76 93 62 91 42C71 42 58 54 60 76Z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"/>
+                <path d="M43 103H77"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <span class="hero-mark-caption">GROW WITH CARE</span>
+    </div>
+</section>
+
+<section class="features-minimal">
+    <div class="section-heading">
+        <p class="eyebrow">ПРОСТО И ПОНЯТНО</p>
+        <h2>Ваш сад начинается здесь</h2>
+    </div>
+
+    <div class="feature-grid">
+
+        <a class="feature-card feature-link"
+           href="{{ url_for('main.plots') }}">
+            <span class="feature-number">01</span>
+
+            <div class="feature-icon" aria-hidden="true">⌂</div>
+
+            <h3>Выберите участок</h3>
+
+            <p>
+                Подберите подходящий вариант для своего будущего урожая.
+            </p>
+        </a>
+
+        <a class="feature-card feature-link"
+           href="{{ url_for('main.plants') }}">
+            <span class="feature-number">02</span>
+
+            <div class="feature-icon" aria-hidden="true">✳</div>
+
+            <h3>Определитесь с культурами</h3>
+
+            <p>
+                Выберите овощи и сорта с понятным описанием
+                и условиями выращивания.
+            </p>
+        </a>
+
+        <a class="feature-card feature-link"
+           href="{{ url_for('main.care') }}">
+            <span class="feature-number">03</span>
+
+            <div class="feature-icon" aria-hidden="true">✿</div>
+
+            <h3>Доверьте уход нам</h3>
+
+            <p>
+                Мы будем заботиться о посадках в течение сезона
+                и информировать вас о процессе.
+            </p>
+        </a>
+
+    </div>
+</section>
+
+<section class="harvest-note">
+    <div>
+        <p class="eyebrow">MY GARDEN</p>
+
+        <h2>
+            Ближе к природе.<br>
+            Проще в повседневной жизни.
+        </h2>
+    </div>
+</section>
+
+{% endblock %}

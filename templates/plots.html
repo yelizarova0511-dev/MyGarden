@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Мои участки | My Garden{% endblock %}
+
+{% block content %}
+<div class="garden-page">
+
+    <section class="garden-hero">
+        <div class="garden-badge">MY GARDEN / УЧАСТКИ</div>
+        <h1>Мои участки</h1>
+        <p>Создавай свой сад, сохраняй участки и планируй посадки.</p>
+        <a class="garden-button garden-button-light"
+           href="{{ url_for('main.profile') }}">
+            В личный кабинет
+        </a>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="garden-panel">
+        <div class="garden-panel-heading">
+            <span class="garden-pixel-icon">▦</span>
+            <div>
+                <h2>Добавить участок</h2>
+                <p>Создай место для своего будущего урожая.</p>
+            </div>
+        </div>
+
+        <form class="garden-form"
+              method="POST"
+              action="{{ url_for('main.plots') }}">
+
+            <label for="name">Название участка</label>
+            <input
+                id="name"
+                name="name"
+                type="text"
+                maxlength="100"
+                placeholder="Например, Дачный участок"
+                required
+            >
+
+            <label for="area">Площадь, м²</label>
+            <input
+                id="area"
+                name="area"
+                type="number"
+                min="0.01"
+                max="1000000"
+                step="any"
+                placeholder="Например, 120"
+                required
+            >
+
+            <label for="description">Описание</label>
+            <textarea
+                id="description"
+                name="description"
+                rows="3"
+                maxlength="1000"
+                placeholder="Что планируешь выращивать?"
+            ></textarea>
+
+            <button class="garden-button" type="submit">
+                + Добавить участок
+            </button>
+        </form>
+    </section>
+
+    <div class="garden-section-heading">
+        <div>
+            <span class="garden-eyebrow">ТВОЯ ЗЕМЛЯ</span>
+            <h2>Мои сохранённые участки</h2>
+        </div>
+        <span class="garden-count">{{ plots|length }}</span>
+    </div>
+
+    {% if plots %}
+        <div class="garden-grid">
+            {% for plot in plots %}
+                <section class="garden-plot-card">
+                    <div class="garden-plot-top">
+                        <span class="garden-plot-icon"></span>
+                        <span class="garden-plot-label">МОЙ УЧАСТОК</span>
+                    </div>
+
+                    <h3>{{ plot.name }}</h3>
+
+                    <div class="garden-area">
+                        <span>ПЛОЩАДЬ</span>
+                        <strong>{{ plot.area }} м²</strong>
+                    </div>
+
+                    <p class="garden-description">
+                        {% if plot.description %}
+                            {{ plot.description }}
+                        {% else %}
+                            Описание пока не добавлено.
+                        {% endif %}
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('main.delete_plot', plot_id=plot.id) }}"
+                        onsubmit="return confirm('Точно удалить этот участок?');"
+                    >
+                        <button class="garden-delete" type="submit">
+                            Удалить участок
+                        </button>
+                    </form>
+                </section>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="garden-empty">
+            <div class="garden-empty-icon">🌿</div>
+            <h3>Твой сад пока пуст</h3>
+            <p>Добавь первый участок, и здесь появится его карточка.</p>
+        </section>
+    {% endif %}
+
+</div>
+{% endblock %}
