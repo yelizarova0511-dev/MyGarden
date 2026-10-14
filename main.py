@@ -1,14 +1,11 @@
+from app import create_app
 
-from flask import Flask
-
-from app.routes import main_bp
-
-app = Flask(__name__)
-
-app.config["SECRET_KEY"] = "dev-key-change-before-production"
-
-app.register_blueprint(main_bp)
+app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5001,
+        debug=True,
+    )

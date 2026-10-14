@@ -14,14 +14,14 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('main.login') }}">
-        <label for="email">Электронная почта</label>
+        <label for="username">Имя пользователя</label>
         <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="name@example.com"
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Введите имя пользователя"
             required
-            autocomplete="email"
+            autocomplete="username"
         >
 
         <label for="password">Пароль</label>
@@ -42,4 +42,3 @@
     </p>
 </section>
 {% endblock %}
-```
