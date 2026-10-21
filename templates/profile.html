@@ -58,7 +58,7 @@
             <h3>{{ session.get("username", "Садовод") }}</h3>
             <span class="profile-user-status">
                 <span class="status-dot"></span>
-                Садовод My Garden
+                {{ role_label|default("Садовод My Garden", true) }}
             </span>
         </div>
     </div>
@@ -111,19 +111,20 @@
             <span class="profile-card-action">Открыть растения</span>
         </a>
 
-        <div class="profile-card profile-card-disabled">
+        <a class="profile-card profile-card-link"
+           href="{{ url_for('main.orders') }}">
             <span class="profile-card-number">03</span>
             <div class="profile-card-icon" aria-hidden="true">□</div>
 
             <h3>Мои заказы</h3>
 
             <p>
-                В будущем здесь появятся покупки,
-                история заказов и информация об их статусах.
+                Оформляй заказы для своих участков,
+                проверяй стоимость и следи за статусом.
             </p>
 
-            <span class="profile-card-action">Скоро появится</span>
-        </div>
+            <span class="profile-card-action">Открыть заказы</span>
+        </a>
     </div>
 </section>
 
@@ -147,8 +148,8 @@
         <h2>Управление аккаунтом</h2>
         <p>
             Здесь можно управлять своим аккаунтом.
-            При удалении профиля твои участки, растения
-            и связанные с ними записи также будут удалены.
+            При удалении профиля твои участки, растения,
+            заказы и связанные с ними записи также будут удалены.
             Восстановить их после удаления не получится.
         </p>
     </div>

@@ -1,0 +1,792 @@
+{% extends "base.html" %}
+
+{% block title %}Мои заказы | My Garden{% endblock %}
+
+{% block content %}
+<div class="garden-page">
+
+    <section class="garden-hero">
+        <span class="garden-badge">MY GARDEN / ORDERS</span>
+        <h1>Мои заказы</h1>
+        <p>Оформляй обслуживание участка, проверяй стоимость и следи за статусом каждого заказа.</p>
+
+        <div class="orders-navigation">
+            <a href="{{ url_for('main.profile') }}" class="garden-button garden-button-light">
+                Личный кабинет
+            </a>
+            <a href="{{ url_for('main.plots') }}" class="garden-button garden-button-light">
+                Мои участки
+            </a>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="status">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if orders %}
+        <section class="orders-summary">
+            <div class="summary-item">
+                <span>Всего заказов</span>
+                <strong>{{ orders|length }}</strong>
+            </div>
+            <div class="summary-item">
+                <span>Ожидают обработки</span>
+                <strong>
+                    {{ orders|selectattr('status', 'equalto', 'pending')|list|length }}
+                </strong>
+            </div>
+            <div class="summary-item">
+                <span>Общая стоимость</span>
+                <strong>
+                    {{ "%.2f"|format(orders|sum(attribute='total_cost') or 0) }} ₽
+                </strong>
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="garden-card" id="new-order">
+        <div class="section-heading">
+            <div>
+                <span class="section-eyebrow">НОВАЯ ЗАЯВКА</span>
+                <h2>Оформить заказ</h2>
+            </div>
+            <span class="section-mark">01</span>
+        </div>
+
+        <p class="section-description">
+            Выбери участок. Система рассчитает предварительную стоимость
+            работ, материалов, воды и семян по действующим тарифам.
+        </p>
+
+        {% if plots %}
+            <form method="POST" action="{{ url_for('main.orders') }}" class="garden-form">
+                <label for="plot_id">Участок для обслуживания</label>
+
+                <select name="plot_id" id="plot_id" required>
+                    <option value="">Выбери участок</option>
+                    {% for plot in plots %}
+                        <option value="{{ plot.id }}">
+                            {{ plot.name }}{% if plot.area is defined %} · {{ plot.area }} м²{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div class="order-info">
+                    <h3>Действующие тарифы</h3>
+
+                    <div class="order-info-row">
+                        <span>Работы сотрудников</span>
+                        <strong>{{ "%.2f"|format(tariffs.area_rate) }} ₽/м²</strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>Материалы</span>
+                        <strong>{{ "%.2f"|format(tariffs.materials_rate) }} ₽/м²</strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>Вода</span>
+                        <strong>{{ "%.2f"|format(tariffs.water_rate) }} ₽/м²</strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>Минимальная доля урожая</span>
+                        <strong>{{ tariffs.minimum_harvest_percent }}%</strong>
+                    </div>
+                </div>
+
+                <p class="order-note">
+                    Итоговая сумма зависит от площади участка, количества семян
+                    и установленных цен. Прогноз урожая является предварительным
+                    и зависит от данных, внесённых сотрудником.
+                </p>
+
+                <button type="submit" class="garden-button">
+                    Рассчитать и оформить заказ
+                    <span aria-hidden="true">→</span>
+                </button>
+            </form>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-state-icon">⌂</span>
+                <h3>Сначала добавь участок</h3>
+                <p>
+                    Чтобы оформить заказ, необходимо создать участок
+                    в личном кабинете.
+                </p>
+                <a href="{{ url_for('main.plots') }}" class="garden-button">
+                    Перейти к участкам
+                </a>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="garden-card">
+        <div class="section-heading">
+            <div>
+                <span class="section-eyebrow">ТВОИ ЗАЯВКИ</span>
+                <h2>История заказов</h2>
+            </div>
+            <span class="section-mark">02</span>
+        </div>
+
+        {% if orders %}
+            <div class="orders-list">
+                {% for order in orders %}
+                    <article class="order-card">
+
+                        <div class="order-card-header">
+                            <div>
+                                <span class="order-number">ЗАКАЗ №{{ order.id }}</span>
+                                <h3>{{ order.plot_name or ("Участок №" ~ order.plot_id) }}</h3>
+                                <p class="order-subtitle">
+                                    Площадь: {{ order.area }} м²
+                                </p>
+                            </div>
+
+                            <span class="order-status
+                                {% if order.status == 'pending' %}status-pending
+                                {% elif order.status == 'paid' %}status-paid
+                                {% elif order.status == 'cancelled' %}status-cancelled
+                                {% else %}status-other{% endif %}">
+
+                                <span class="status-dot"></span>
+
+                                {% if order.status == 'pending' %}
+                                    Ожидает обработки
+                                {% elif order.status == 'paid' %}
+                                    Оплачен
+                                {% elif order.status == 'cancelled' %}
+                                    Отменён
+                                {% else %}
+                                    {{ order.status }}
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="order-divider"></div>
+
+                        <div class="order-info">
+                            <div class="order-info-row">
+                                <span>Работы сотрудников</span>
+                                <strong>{{ "%.2f"|format(order.area_cost or 0) }} ₽</strong>
+                            </div>
+                            <div class="order-info-row">
+                                <span>Материалы и вода</span>
+                                <strong>
+                                    {{ "%.2f"|format((order.materials_cost or 0) + (order.water_cost or 0)) }} ₽
+                                </strong>
+                            </div>
+                            <div class="order-info-row">
+                                <span>Семена</span>
+                                <strong>{{ "%.2f"|format(order.seed_cost or 0) }} ₽</strong>
+                            </div>
+                            <div class="order-info-row order-total">
+                                <span>Общая стоимость</span>
+                                <strong>{{ "%.2f"|format(order.total_cost or 0) }} ₽</strong>
+                            </div>
+                        </div>
+
+                        <div class="harvest-info">
+                            <div class="harvest-heading">
+                                <span class="harvest-icon" aria-hidden="true">↗</span>
+                                <div>
+                                    <h4>Прогноз урожая</h4>
+                                    <p>Расчёт по текущим данным</p>
+                                </div>
+                            </div>
+
+                            <div class="harvest-metrics">
+                                <div>
+                                    <span>Минимальный прогноз</span>
+                                    <strong>
+                                        {{ "%.2f"|format(order.forecast_min_kg or 0) }} кг
+                                    </strong>
+                                </div>
+                                <div>
+                                    <span>Минимальная доля ({{ order.minimum_harvest_percent }}%)</span>
+                                    <strong>
+                                        {{ "%.2f"|format(order.guaranteed_harvest_kg or 0) }} кг
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if order.status == 'pending' %}
+                            <div class="payment-notice">
+                                <strong>Заказ ожидает обработки</strong>
+                                <p>
+                                    Онлайн-оплата пока не подключена.
+                                    Заказ сохранён в системе. Не переводите деньги
+                                    по неизвестным реквизитам.
+                                </p>
+                            </div>
+
+                            <form method="POST"
+                                  action="{{ url_for('main.cancel_order', order_id=order.id) }}"
+                                  class="cancel-order-form"
+                                  onsubmit="return confirm('Действительно отменить заказ №{{ order.id }}?');">
+                                <button type="submit" class="garden-button garden-button-secondary">
+                                    Отменить заказ
+                                </button>
+                            </form>
+                        {% elif order.status == 'paid' %}
+                            <div class="order-message">
+                                Заказ отмечен как оплаченный.
+                            </div>
+                        {% elif order.status == 'cancelled' %}
+                            <div class="order-message order-message-muted">
+                                Этот заказ отменён.
+                            </div>
+                        {% endif %}
+
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-state-icon">↗</span>
+                <h3>Заказов пока нет</h3>
+                <p>
+                    Здесь появится история заказов, их стоимость
+                    и информация о прогнозируемом урожае.
+                </p>
+                {% if plots %}
+                    <a href="#new-order" class="garden-button">
+                        Оформить первый заказ
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </section>
+
+</div>
+
+<style>
+.garden-page {
+    width: min(100% - 32px, 1000px);
+    margin: 0 auto;
+    padding: 36px 0 64px;
+    color: #29382c;
+}
+
+.garden-hero {
+    margin-bottom: 28px;
+}
+
+.garden-badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #71836a;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.garden-hero h1 {
+    margin: 0 0 12px;
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 600;
+    letter-spacing: -1px;
+}
+
+.garden-hero > p,
+.section-description {
+    color: #778075;
+    line-height: 1.7;
+}
+
+.orders-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.garden-card {
+    margin: 22px 0;
+    padding: clamp(20px, 4vw, 32px);
+    border: 1px solid #e5e8df;
+    border-radius: 20px;
+    background: #fffefa;
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.section-eyebrow {
+    color: #849078;
+    font-size: 11px;
+    letter-spacing: 1.7px;
+}
+
+.section-heading h2 {
+    margin: 7px 0 0;
+    font-size: 23px;
+    font-weight: 600;
+}
+
+.section-mark {
+    color: #d5dacd;
+    font-size: 25px;
+    font-weight: 500;
+}
+
+.section-description {
+    margin: 0 0 22px;
+}
+
+.orders-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 19px;
+    border: 1px solid #e5e8df;
+    border-radius: 15px;
+    background: #f8f8f2;
+}
+
+.summary-item span {
+    color: #758070;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.summary-item strong {
+    font-size: clamp(18px, 2.5vw, 25px);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.garden-form {
+    display: grid;
+    gap: 12px;
+}
+
+.garden-form label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.garden-form select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px;
+    border: 1px solid #d9dfd3;
+    border-radius: 10px;
+    background: white;
+    color: #29382c;
+    font: inherit;
+}
+
+.garden-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 13px 20px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #526b4d;
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.garden-button:hover {
+    background: #3e563a;
+}
+
+.garden-button-light {
+    border-color: #dfe4d8;
+    background: #fffefa;
+    color: #526b4d;
+}
+
+.garden-button-light:hover {
+    border-color: #aebba5;
+    background: #f4f6ef;
+    color: #3e563a;
+}
+
+.garden-button-secondary {
+    border-color: #e5e3d8;
+    background: #f5f2e9;
+    color: #625d4d;
+}
+
+.garden-button-secondary:hover {
+    background: #ebe6d9;
+}
+
+.order-info {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f5f5ed;
+}
+
+.order-info h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.order-info-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e4e6dc;
+}
+
+.order-info-row:last-child {
+    border-bottom: 0;
+}
+
+.order-info-row span {
+    color: #697365;
+    line-height: 1.5;
+}
+
+.order-info-row strong {
+    flex-shrink: 0;
+    text-align: right;
+    line-height: 1.5;
+}
+
+.order-note {
+    margin: 4px 0;
+    color: #778075;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.orders-list {
+    display: grid;
+    gap: 18px;
+    margin-top: 22px;
+}
+
+.order-card {
+    min-width: 0;
+    padding: clamp(16px, 3vw, 22px);
+    border: 1px solid #e5e8df;
+    border-radius: 15px;
+    background: #fffefa;
+}
+
+.order-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.order-number {
+    color: #849078;
+    font-size: 11px;
+    letter-spacing: 1.4px;
+}
+
+.order-card-header h3 {
+    margin: 7px 0;
+    font-size: 20px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.order-subtitle {
+    margin: 0;
+    color: #778075;
+    font-size: 13px;
+}
+
+.order-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-pending {
+    background: #f6f0dc;
+    color: #81703c;
+}
+
+.status-paid {
+    background: #e9f2e5;
+    color: #4c7147;
+}
+
+.status-cancelled {
+    background: #f1eeeb;
+    color: #77716b;
+}
+
+.status-other {
+    background: #edf0e8;
+    color: #5d6c56;
+}
+
+.order-divider {
+    height: 1px;
+    margin: 19px 0 8px;
+    background: #e8e9e1;
+}
+
+.order-total {
+    margin-top: 3px;
+    font-size: 16px;
+}
+
+.harvest-info {
+    margin-top: 18px;
+    padding: 17px;
+    border-radius: 12px;
+    background: #f4f7f0;
+}
+
+.harvest-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 13px;
+}
+
+.harvest-icon {
+    display: grid;
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 10px;
+    background: #e5ecde;
+    color: #526b4d;
+    font-size: 20px;
+}
+
+.harvest-heading h4 {
+    margin: 0 0 4px;
+    font-size: 15px;
+}
+
+.harvest-heading p {
+    margin: 0;
+    color: #7a8474;
+    font-size: 12px;
+}
+
+.harvest-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.harvest-metrics > div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 12px;
+    border: 1px solid #e1e8da;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.harvest-metrics span {
+    color: #758070;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.harvest-metrics strong {
+    font-size: 17px;
+    overflow-wrap: anywhere;
+}
+
+.payment-notice,
+.order-message {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: #faf7ec;
+    color: #6e654b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.payment-notice {
+    border-left: 3px solid #b6a36b;
+}
+
+.payment-notice strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.payment-notice p {
+    margin: 0;
+}
+
+.order-message {
+    background: #edf4e9;
+    color: #4c7147;
+}
+
+.order-message-muted {
+    background: #f2f0ed;
+    color: #77716b;
+}
+
+.cancel-order-form {
+    margin-top: 16px;
+}
+
+.cancel-order-form .garden-button {
+    margin-top: 0;
+}
+
+.empty-state {
+    padding: 28px 12px;
+    text-align: center;
+}
+
+.empty-state-icon {
+    display: inline-grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: 15px;
+    background: #edf1e7;
+    color: #526b4d;
+    font-size: 27px;
+}
+
+.empty-state h3 {
+    margin: 16px 0 8px;
+    font-size: 19px;
+}
+
+.empty-state p {
+    max-width: 440px;
+    margin: 0 auto 20px;
+    color: #778075;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.alert {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border: 1px solid #e5e8df;
+    border-radius: 10px;
+    background: #f4f5ed;
+    color: #52614d;
+    line-height: 1.6;
+}
+
+.alert-error,
+.alert-danger {
+    border-color: #ead5ce;
+    background: #fbf0ec;
+    color: #8a5144;
+}
+
+@media (max-width: 650px) {
+    .orders-summary {
+        grid-template-columns: 1fr;
+        gap: 9px;
+    }
+
+    .summary-item {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 15px 17px;
+    }
+
+    .summary-item strong {
+        font-size: 20px;
+        text-align: right;
+    }
+
+    .harvest-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .order-info-row {
+        gap: 12px;
+        font-size: 13px;
+    }
+
+    .orders-navigation .garden-button {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 380px) {
+    .garden-page {
+        width: calc(100% - 22px);
+        padding-top: 25px;
+    }
+
+    .garden-card {
+        padding: 17px 14px;
+        border-radius: 15px;
+    }
+
+    .order-card {
+        padding: 14px 12px;
+    }
+
+    .order-card-header {
+        flex-direction: column;
+    }
+
+    .garden-button {
+        width: 100%;
+    }
+
+    .orders-navigation .garden-button {
+        width: auto;
+    }
+}
+</style>
+{% endblock %}

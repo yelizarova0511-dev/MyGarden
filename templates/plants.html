@@ -6,251 +6,797 @@
 <div class="garden-page">
 
     <section class="garden-hero">
-        <div class="garden-badge">MY GARDEN / РАСТЕНИЯ</div>
-        <h1>Мои растения</h1>
-        <p>Добавляй культуры, планируй посадки и следи за будущим урожаем.</p>
+        <span class="garden-badge">MY GARDEN / PLANTS</span>
+        <h1>{% if is_staff %}Рабочая панель растений{% else %}Мои растения{% endif %}</h1>
+        <p>
+            {% if is_staff %}
+                Управляй этапами роста, показателями и расчётами урожая.
+            {% else %}
+                Добавляй растения, следи за их ростом и смотри результаты.
+            {% endif %}
+        </p>
 
         <div class="garden-actions">
-            <a class="garden-button garden-button-light"
-               href="{{ url_for('main.profile') }}">
-                В личный кабинет
-            </a>
-            <a class="garden-button"
-               href="{{ url_for('main.plots') }}">
-                Мои участки
-            </a>
+            <a href="{{ url_for('main.profile') }}" class="garden-button">Личный кабинет</a>
+            <a href="{{ url_for('main.plots') }}" class="garden-button garden-button-light">Мои участки</a>
+            {% if role == 'admin' %}
+                <a href="{{ url_for('main.admin_users') }}" class="garden-button garden-button-light">Пользователи</a>
+            {% endif %}
         </div>
     </section>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-            <p class="message {{ category }}">{{ message }}</p>
+            <div class="message {{ category }}" role="status">{{ message }}</div>
         {% endfor %}
     {% endwith %}
 
     <section class="garden-panel">
         <div class="garden-panel-heading">
-            <span class="garden-pixel-icon">▦</span>
+            <div class="garden-pixel-icon">＋</div>
             <div>
-                <h2>Добавить растение</h2>
-                <p>Заполни информацию о новой культуре.</p>
+                <h2>Посадить растение</h2>
+                <p>Добавь растение в свою коллекцию.</p>
             </div>
         </div>
 
-        <form class="garden-form"
-              method="POST"
-              action="{{ url_for('main.plants') }}">
+        <form method="POST" action="{{ url_for('main.plants') }}" class="garden-form">
+            <label for="plant-name">Название растения *</label>
+            <input id="plant-name" type="text" name="name" maxlength="100"
+                   placeholder="Например, Томаты на грядке № 1" required>
 
-            <label for="name">Название растения</label>
-            <input
-                id="name"
-                name="name"
-                type="text"
-                maxlength="100"
-                placeholder="Например, Томат"
-                required
-            >
-
-            <label for="category">Вид культуры</label>
-            <select id="category" name="category" required>
-                <option value="">Выбери категорию овощей</option>
-                <option value="Томаты">Томаты</option>
-                <option value="Огурцы">Огурцы</option>
-                <option value="Перец">Перец</option>
-                <option value="Капуста">Капуста</option>
-                <option value="Морковь">Морковь</option>
-                <option value="Свёкла">Свёкла</option>
-                <option value="Картофель">Картофель</option>
-                <option value="Тыква">Тыква</option>
+            <label for="plant-category">Вид овоща *</label>
+            <select id="plant-category" name="category" required>
+                <option value="">Выбери овощ</option>
+                <option value="tomatoes">Томаты</option>
+                <option value="cucumbers">Огурцы</option>
+                <option value="pepper">Перец</option>
+                <option value="cabbage">Капуста</option>
+                <option value="carrot">Морковь</option>
+                <option value="beet">Свёкла</option>
+                <option value="potato">Картофель</option>
+                <option value="pumpkin">Тыква</option>
             </select>
 
-            <label for="variety">Сорт растения</label>
-            <select id="variety" name="variety" required>
-                <option value="">Сначала выбери культуру</option>
+            <label for="plant-variety">Сорт</label>
+            <select id="plant-variety" name="variety">
+                <option value="">Сначала выбери овощ</option>
             </select>
 
-            <label for="plot_id">К какому участку относится?</label>
-            <select id="plot_id" name="plot_id">
-                <option value="">Пока без участка</option>
+            <label for="plant-plot">Участок</label>
+            <select id="plant-plot" name="plot_id">
+                <option value="">Без привязки к участку</option>
                 {% for plot in plots %}
-                    <option value="{{ plot.id }}">{{ plot.name }}</option>
+                    <option value="{{ plot.id }}">
+                        {{ plot.name }}{% if is_staff and plot.owner_username is defined %} — {{ plot.owner_username }}{% endif %}
+                    </option>
                 {% endfor %}
             </select>
 
-            <label for="planting_date">Дата посадки</label>
-            <input
-                id="planting_date"
-                name="planting_date"
-                type="date"
-            >
+            <label for="planting-date">Дата посадки</label>
+            <input id="planting-date" type="date" name="planting_date">
 
-            <label for="notes">Заметки</label>
-            <textarea
-                id="notes"
-                name="notes"
-                rows="3"
-                maxlength="1000"
-                placeholder="Например, поливать каждый вечер"
-            ></textarea>
+            {% if is_staff %}
+                <div class="staff-fields-heading">
+                    <h3>Рабочие показатели</h3>
+                    <p>Эти значения доступны только сотрудникам и администраторам.</p>
+                </div>
 
-            <button class="garden-button" type="submit">
-                + Добавить растение
-            </button>
+                <label for="seed-count">Количество растений</label>
+                <input id="seed-count" type="number" name="seed_count" min="0" value="1">
+
+                <label for="harvest-min">Минимальный планируемый урожай, кг</label>
+                <input id="harvest-min" type="number" name="harvest_min_kg"
+                       min="0" step="0.1" placeholder="Например, 2">
+
+                <label for="harvest-est-min">Ожидаемый урожай от, кг</label>
+                <input id="harvest-est-min" type="number" name="harvest_est_min_kg"
+                       min="0" step="0.1" placeholder="Например, 3">
+
+                <label for="harvest-est-max">Ожидаемый урожай до, кг</label>
+                <input id="harvest-est-max" type="number" name="harvest_est_max_kg"
+                       min="0" step="0.1" placeholder="Например, 5">
+
+                <label for="harvest-actual">Уже собрано, кг</label>
+                <input id="harvest-actual" type="number" name="harvest_actual_kg"
+                       min="0" step="0.1" value="0">
+            {% endif %}
+
+            <label for="plant-notes">Заметки</label>
+            <textarea id="plant-notes" name="notes" rows="3" maxlength="1000"
+                      placeholder="Дополнительная информация о растении"></textarea>
+
+            <button type="submit" class="garden-button">Добавить растение</button>
         </form>
     </section>
 
     <div class="garden-section-heading">
         <div>
-            <span class="garden-eyebrow">МОЯ КОЛЛЕКЦИЯ</span>
-            <h2>Сохранённые растения</h2>
+            <span class="garden-eyebrow">
+                {% if is_staff %}WORKSPACE{% else %}MY COLLECTION{% endif %}
+            </span>
+            <h2>{% if is_staff %}Растения в системе{% else %}Моя коллекция{% endif %}</h2>
         </div>
         <span class="garden-count">{{ plants|length }}</span>
     </div>
 
+    {% if is_staff %}
+        <p class="garden-role-note">
+            Рабочий режим: отображаются растения всех пользователей.
+        </p>
+    {% endif %}
+
+    <section class="plant-folder">
+        <button type="button" class="plant-folder-button"
+                id="open-plant-folder" aria-expanded="false"
+                aria-controls="plant-folder-content">
+            <span class="plant-folder-icon">▰</span>
+            <span class="plant-folder-text">
+                <strong>{% if is_staff %}Папка растений{% else %}Папка моих растений{% endif %}</strong>
+                <small>Нажми, чтобы открыть список овощей</small>
+            </span>
+            <span class="plant-folder-count">{{ plants|length }}</span>
+            <span class="plant-folder-arrow" aria-hidden="true">⌄</span>
+        </button>
+
+        <div class="plant-folder-content" id="plant-folder-content" hidden>
+            <div class="plant-folder-heading">
+                <div>
+                    <h3>Растения</h3>
+                    <p>Выбери растение, чтобы открыть его карточку.</p>
+                </div>
+                <button type="button" class="plant-folder-close" id="close-plant-folder">
+                    Закрыть
+                </button>
+            </div>
+
+            {% if plants %}
+                <div class="plant-folder-list" id="plant-folder-list"></div>
+            {% else %}
+                <div class="plant-folder-empty">
+                    <span class="plant-folder-empty-icon">✳</span>
+                    <p>Пока нет растений</p>
+                    <span>Добавь первое растение через форму выше.</span>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
     {% if plants %}
-        <div class="garden-grid">
+        <section class="plant-detail-view" id="plant-detail-view" hidden>
+            <button type="button" class="plant-back-button" id="back-to-plant-folder">
+                ← Назад к списку растений
+            </button>
+            <div id="selected-plant-container"></div>
+        </section>
+
+        <div class="plant-source-cards" id="all-plant-cards">
             {% for plant in plants %}
-                <section class="garden-plot-card">
+                <article class="garden-plot-card garden-plant-card"
+                         data-plant-id="{{ plant.id }}"
+                         data-plant-name="{{ plant.name }}"
+                         data-plant-category="{{ plant.category or '' }}"
+                         data-plant-stage="{{ plant.growth_stage_label|default('Росток') }}">
 
                     <div class="garden-plot-top">
-                        <span class="garden-plot-icon"></span>
-                        <span class="garden-plot-label">МОЁ РАСТЕНИЕ</span>
+                        <span class="garden-plot-label">MY GARDEN / {{ loop.index }}</span>
+                        <span class="garden-plant-category">{{ plant.category or 'Растение' }}</span>
+                    </div>
+
+                    {% if is_staff and plant.owner_username is defined %}
+                        <p class="plant-owner-label">Владелец: {{ plant.owner_username }}</p>
+                    {% endif %}
+
+                    <div class="real-plant-scene">
+                        <div class="real-plant-art"
+                             data-category="{{ plant.category|default('tomatoes')|lower }}"
+                             data-stage="{{ plant.growth_stage|default('sprout') }}"
+                             role="img" aria-label="{{ plant.name }}"></div>
+                        <div class="real-plant-caption">
+                            <span class="real-plant-caption-name">{{ plant.name }}</span>
+                            <span class="real-plant-caption-stage">{{ plant.growth_stage_label|default('Росток') }}</span>
+                        </div>
                     </div>
 
                     <h3>{{ plant.name }}</h3>
 
-                    <div class="garden-area">
-                        <span>КАТЕГОРИЯ</span>
-                        <strong>{{ plant.category }}</strong>
-                    </div>
-
-                    <div class="garden-area">
-                        <span>СОРТ</span>
-                        <strong>{{ plant.variety or 'Не указан' }}</strong>
-                    </div>
-
                     <div class="garden-plant-details">
-                        <p>
-                            <strong>Участок:</strong>
-                            {% if plant.plot_name %}
-                                {{ plant.plot_name }}
-                            {% else %}
-                                Не указан
-                            {% endif %}
-                        </p>
-
-                        {% if plant.planting_date %}
-                            <p>
-                                <strong>Дата посадки:</strong>
-                                {{ plant.planting_date }}
-                            </p>
+                        <p><strong>Овощ:</strong> <span class="category-russian">{{ plant.category or 'Не указан' }}</span></p>
+                        {% if plant.variety %}
+                            <p><strong>Сорт:</strong> {{ plant.variety }}</p>
                         {% endif %}
-
-                        <p>
-                            <strong>Заметки:</strong>
-                            {% if plant.notes %}
-                                {{ plant.notes }}
-                            {% else %}
-                                Пока не добавлены
-                            {% endif %}
-                        </p>
+                        <p><strong>Количество растений:</strong> {{ plant.seed_count|default(0) }}</p>
+                        <p><strong>Участок:</strong> {{ plant.plot_name or 'Не указан' }}</p>
+                        <p><strong>Дата посадки:</strong> {{ plant.planting_date or 'Не указана' }}</p>
+                        {% if plant.notes %}
+                            <p><strong>Заметки:</strong> {{ plant.notes }}</p>
+                        {% endif %}
                     </div>
 
-                    <form
-                        method="POST"
-                        action="{{ url_for('main.delete_plant', plant_id=plant.id) }}"
-                        onsubmit="return confirm('Точно удалить это растение?');"
-                    >
-                        <button class="garden-delete" type="submit">
-                            Удалить растение
-                        </button>
-                    </form>
+                    <section class="garden-growth">
+                        <div class="garden-growth-heading">
+                            <h4>Прогресс роста</h4>
+                            <span class="garden-growth-percent">{{ plant.growth_progress|default(0) }}%</span>
+                        </div>
 
-                </section>
+                        <div class="garden-growth-track" role="progressbar"
+                             aria-label="Прогресс роста {{ plant.name }}"
+                             aria-valuemin="0" aria-valuemax="100"
+                             aria-valuenow="{{ plant.growth_progress|default(0) }}">
+                            <div class="garden-growth-fill"
+                                 style="width: {{ plant.growth_progress|default(0) }}%;"></div>
+                        </div>
+
+                        <div class="garden-growth-stages">
+                            {% for stage_key, stage in growth_stages.items() %}
+                                <div class="garden-growth-stage {% if stage_key == plant.growth_stage %}active{% endif %}">
+                                    <span class="garden-growth-pixel">
+                                        {% if stage_key == 'sprout' %}·
+                                        {% elif stage_key == 'leaves' %}✳
+                                        {% elif stage_key == 'flowering' %}✿
+                                        {% elif stage_key == 'fruiting' %}◆
+                                        {% elif stage_key == 'ripening' %}●
+                                        {% elif stage_key == 'harvested' %}✓
+                                        {% else %}✦{% endif %}
+                                    </span>
+                                    {{ stage.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <section class="garden-harvest">
+                        <h4>Результаты урожая</h4>
+                        <div class="garden-harvest-stats">
+                            <div class="garden-harvest-stat">
+                                <span>Минимальный план</span>
+                                <strong>{{ plant.harvest_min_kg|default(0) }} кг</strong>
+                            </div>
+                            <div class="garden-harvest-stat">
+                                <span>Уже собрано</span>
+                                <strong>{{ plant.harvest_actual_kg|default(0) }} кг</strong>
+                            </div>
+                            <div class="garden-harvest-stat">
+                                <span>Прогноз от</span>
+                                <strong>{{ plant.harvest_est_min_kg|default(0) }} кг</strong>
+                            </div>
+                            <div class="garden-harvest-stat">
+                                <span>Прогноз до</span>
+                                <strong>{{ plant.harvest_est_max_kg|default(0) }} кг</strong>
+                            </div>
+                        </div>
+
+                        {% if is_staff %}
+                            <form method="POST"
+                                  action="{{ url_for('main.update_plant', plant_id=plant.id) }}"
+                                  class="garden-harvest-form">
+                                <h4>Изменить рабочие показатели</h4>
+
+                                <label for="stage-{{ plant.id }}">Стадия развития</label>
+                                <select id="stage-{{ plant.id }}" name="growth_stage">
+                                    {% for stage_key, stage in growth_stages.items() %}
+                                        <option value="{{ stage_key }}"
+                                            {% if stage_key == plant.growth_stage %}selected{% endif %}>
+                                            {{ stage.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+
+                                <label for="seeds-{{ plant.id }}">Количество растений</label>
+                                <input id="seeds-{{ plant.id }}" type="number" name="seed_count"
+                                       min="0" value="{{ plant.seed_count|default(0) }}">
+
+                                <label for="min-{{ plant.id }}">Минимальный урожай, кг</label>
+                                <input id="min-{{ plant.id }}" type="number" name="harvest_min_kg"
+                                       min="0" step="0.1" value="{{ plant.harvest_min_kg|default(0) }}">
+
+                                <label for="est-min-{{ plant.id }}">Прогноз от, кг</label>
+                                <input id="est-min-{{ plant.id }}" type="number" name="harvest_est_min_kg"
+                                       min="0" step="0.1" value="{{ plant.harvest_est_min_kg|default(0) }}">
+
+                                <label for="est-max-{{ plant.id }}">Прогноз до, кг</label>
+                                <input id="est-max-{{ plant.id }}" type="number" name="harvest_est_max_kg"
+                                       min="0" step="0.1" value="{{ plant.harvest_est_max_kg|default(0) }}">
+
+                                <label for="actual-{{ plant.id }}">Собрано, кг</label>
+                                <input id="actual-{{ plant.id }}" type="number" name="harvest_actual_kg"
+                                       min="0" step="0.1" value="{{ plant.harvest_actual_kg|default(0) }}">
+
+                                <button type="submit" class="garden-button">Сохранить изменения</button>
+                            </form>
+                        {% endif %}
+                    </section>
+
+                    {% if is_staff or plant.user_id == session.get('user_id') %}
+                        <form method="POST"
+                              action="{{ url_for('main.delete_plant', plant_id=plant.id) }}"
+                              class="garden-delete-form"
+                              onsubmit="return confirm('Удалить это растение?');">
+                            <button type="submit" class="garden-delete">Удалить растение</button>
+                        </form>
+                    {% endif %}
+                </article>
             {% endfor %}
         </div>
-    {% else %}
-        <section class="garden-empty">
-            <div class="garden-empty-icon"></div>
-            <h3>Коллекция пока пуста</h3>
-            <p>Добавь первое растение с помощью формы выше.</p>
-        </section>
     {% endif %}
-
 </div>
+
+<style>
+.plant-folder { margin:18px 0 28px; }
+
+.plant-folder-button {
+    display:flex; align-items:center; gap:16px; width:100%; padding:22px;
+    border:1px solid #dfe5d8; border-radius:18px; background:#f7f6ef;
+    color:#344c3b; text-align:left; cursor:pointer; transition:background .2s,border-color .2s;
+}
+.plant-folder-button:hover { background:#eef1e7; border-color:#b8c8b0; }
+
+.plant-folder-icon {
+    display:grid; place-items:center; flex-shrink:0; width:52px; height:46px;
+    border-radius:12px; background:#dfe8d7; color:#496b46; font-size:26px;
+}
+.plant-folder-text { display:flex; flex:1; flex-direction:column; gap:5px; min-width:0; }
+.plant-folder-text strong { font-size:1rem; }
+.plant-folder-text small { color:#7a8372; font-size:.82rem; }
+.plant-folder-count {
+    display:grid; place-items:center; min-width:34px; height:34px; padding:0 9px;
+    border-radius:10px; background:#e7ecdf; font-weight:700;
+}
+.plant-folder-arrow { font-size:22px; transition:transform .2s; }
+.plant-folder-button[aria-expanded="true"] .plant-folder-arrow { transform:rotate(180deg); }
+
+.plant-folder-content {
+    margin-top:14px; padding:22px; border:1px solid #e2e6dc;
+    border-radius:18px; background:#fffefa;
+}
+.plant-folder-heading {
+    display:flex; justify-content:space-between; align-items:center;
+    gap:16px; margin-bottom:18px;
+}
+.plant-folder-heading h3 { margin:0 0 6px; color:#344c3b; }
+.plant-folder-heading p { margin:0; color:#7a8372; font-size:.86rem; }
+
+.plant-folder-close, .plant-back-button {
+    padding:10px 14px; border:1px solid #dfe5d8; border-radius:10px;
+    background:#f7f6ef; color:#344c3b; cursor:pointer; font:inherit;
+}
+.plant-folder-list {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px;
+}
+.plant-folder-item {
+    display:flex; align-items:center; gap:12px; width:100%; padding:14px;
+    border:1px solid #e5e8dd; border-radius:12px; background:white;
+    color:#344c3b; text-align:left; cursor:pointer; transition:background .2s,border-color .2s;
+}
+.plant-folder-item:hover { background:#f0f3e9; border-color:#b8c8b0; }
+.plant-folder-item:focus-visible, .plant-folder-button:focus-visible {
+    outline:3px solid #9bb391; outline-offset:3px;
+}
+.plant-folder-item-icon {
+    display:grid; place-items:center; flex-shrink:0; width:42px; height:42px;
+    border-radius:10px; background:#e7ecdf; font-size:24px;
+}
+.plant-folder-item-info { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.plant-folder-item-name { font-weight:600; overflow-wrap:anywhere; }
+.plant-folder-item-meta { color:#7a8372; font-size:.78rem; }
+
+.plant-folder-empty { padding:25px 12px; color:#7a8372; text-align:center; }
+.plant-folder-empty p { color:#344c3b; font-weight:600; }
+.plant-folder-empty-icon { font-size:26px; }
+
+.plant-detail-view { margin-top:20px; }
+.plant-back-button { margin-bottom:16px; }
+.plant-detail-view .garden-plant-card { width:100%; max-width:760px; margin:0 auto; }
+.plant-source-cards { display:none !important; }
+[hidden] { display:none !important; }
+
+.real-plant-scene {
+    margin:18px 0 22px; overflow:hidden; border:1px solid #e5e8dd;
+    border-radius:16px; background:#f7f6ef;
+}
+.real-plant-art {
+    display:flex; align-items:flex-end; justify-content:center; height:230px;
+    padding:8px 12px 0; overflow:hidden;
+    background:radial-gradient(ellipse at 50% 100%,rgba(194,202,170,.3),transparent 62%),
+               linear-gradient(180deg,#f7f6ef 0%,#f1f0e6 100%);
+}
+.real-plant-art svg {
+    display:block; width:100%; height:100%; max-width:300px; overflow:visible;
+}
+.real-plant-art .plant-drawing {
+    transform-box:fill-box;
+    transform-origin:50% 100%;
+    animation:plant-sway 4.5s ease-in-out infinite;
+}
+.real-plant-art[data-category="tomatoes"] .plant-drawing { animation-duration:4.2s; }
+.real-plant-art[data-category="cucumbers"] .plant-drawing { animation-duration:5s; }
+.real-plant-art[data-category="pepper"] .plant-drawing { animation-duration:4.6s; }
+.real-plant-art[data-category="cabbage"] .plant-drawing { animation-duration:5.4s; }
+.real-plant-art[data-category="carrot"] .plant-drawing { animation-duration:3.8s; }
+.real-plant-art[data-category="beet"] .plant-drawing { animation-duration:4.8s; }
+.real-plant-art[data-category="potato"] .plant-drawing { animation-duration:5.1s; }
+.real-plant-art[data-category="pumpkin"] .plant-drawing { animation-duration:4.4s; }
+
+@keyframes plant-sway {
+    0%, 100% { transform:rotate(-1.4deg) translateY(0); }
+    50% { transform:rotate(1.4deg) translateY(-2px); }
+}
+
+.real-plant-caption {
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:12px 15px; border-top:1px solid #e4e5d9; background:rgba(255,255,255,.5);
+}
+.real-plant-caption-name { color:#344c3b; font-size:.9rem; font-weight:600; }
+.real-plant-caption-stage { color:#77806c; font-size:.78rem; text-align:right; }
+.plant-detail-view .real-plant-art { height:280px; }
+
+.garden-plant-card h3 { overflow-wrap:anywhere; }
+.garden-plant-details p { line-height:1.6; overflow-wrap:anywhere; }
+.staff-fields-heading {
+    grid-column:1 / -1; margin-top:12px; padding-top:16px;
+    border-top:1px solid #e2e6dc;
+}
+.staff-fields-heading h3 { margin-bottom:6px; color:#344c3b; }
+.staff-fields-heading p, .garden-role-note {
+    color:#71806c; font-size:.9rem; line-height:1.6;
+}
+.plant-owner-label {
+    padding:8px 10px; border-radius:8px;
+    background:#f1f3eb; color:#52644e; font-size:.85rem;
+}
+.garden-harvest-form {
+    display:grid; gap:10px; margin-top:20px; padding-top:18px;
+    border-top:1px solid #e2e6dc;
+}
+.garden-harvest-form h4 { margin:0 0 5px; }
+.garden-harvest-form label { font-size:.9rem; font-weight:600; }
+.garden-harvest-form input, .garden-harvest-form select {
+    box-sizing:border-box; width:100%; padding:11px 12px;
+    border:1px solid #d9dfd3; border-radius:10px; background:white;
+    color:#29382c; font:inherit;
+}
+.garden-delete-form { margin-top:16px; }
+.garden-delete {
+    padding:8px 0; border:0; background:transparent;
+    color:#9b7468; font:inherit; font-size:13px; cursor:pointer;
+}
+.garden-delete:hover { color:#854c40; text-decoration:underline; }
+
+@media (prefers-reduced-motion:reduce) {
+    .real-plant-art .plant-drawing { animation:none !important; }
+    .plant-folder-button, .plant-folder-item, .plant-folder-arrow { transition:none; }
+}
+@media (max-width:600px) {
+    .plant-folder-button { gap:10px; padding:15px; }
+    .plant-folder-icon { width:42px; height:42px; font-size:22px; }
+    .plant-folder-text small { font-size:.75rem; }
+    .plant-folder-content { padding:15px; }
+    .plant-folder-list { grid-template-columns:1fr; }
+    .plant-folder-heading { align-items:flex-start; }
+    .real-plant-art { height:205px; }
+}
+</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const category = document.getElementById("category");
-    const variety = document.getElementById("variety");
-
-    const varieties = {
-        "Томаты": [
-            "Бычье сердце",
-            "Санька",
-            "Помидоры черри"
-        ],
-        "Огурцы": [
-            "Нежинский",
-            "Муромский",
-            "Вязниковский"
-        ],
-        "Перец": [
-            "Ласточка",
-            "Калифорнийское чудо",
-            "Подарок Молдовы"
-        ],
-        "Капуста": [
-            "Слава",
-            "Надежда",
-            "Подарок"
-        ],
-        "Морковь": [
-            "Нантская",
-            "Шантане",
-            "Королева осени"
-        ],
-        "Свёкла": [
-            "Бордо",
-            "Египетская плоская",
-            "Цилиндра"
-        ],
-        "Картофель": [
-            "Невский",
-            "Удача",
-            "Беллароза"
-        ],
-        "Тыква": [
-            "Россиянка",
-            "Улыбка",
-            "Волжская серая"
-        ]
+    const vegetables = {
+        tomatoes: { name:"Томаты", emoji:"🍅", varieties:["Бычье сердце","Санька","Черри"] },
+        cucumbers: { name:"Огурцы", emoji:"🥒", varieties:["Нежинский","Муромский","Вязниковский"] },
+        pepper: { name:"Перец", emoji:"🫑", varieties:["Ласточка","Калифорнийское чудо","Подарок Молдовы"] },
+        cabbage: { name:"Капуста", emoji:"🥬", varieties:["Слава","Надежда","Подарок"] },
+        carrot: { name:"Морковь", emoji:"🥕", varieties:["Нантская","Шантане","Королева осени"] },
+        beet: { name:"Свёкла", emoji:"🟣", varieties:["Бордо","Египетская плоская","Цилиндра"] },
+        potato: { name:"Картофель", emoji:"🥔", varieties:["Невский","Удача","Беллароза"] },
+        pumpkin: { name:"Тыква", emoji:"🎃", varieties:["Россиянка","Улыбка","Волжская серая"] }
     };
 
+    const aliases = {
+        tomatoes:["tomatoes","tomato","томат"],
+        cucumbers:["cucumbers","cucumber","огур"],
+        pepper:["pepper","перец"],
+        cabbage:["cabbage","капуст"],
+        carrot:["carrot","морков"],
+        beet:["beet","свёкл","свекл"],
+        potato:["potato","картоф"],
+        pumpkin:["pumpkin","тыкв"]
+    };
+
+    function normalize(raw) {
+        const value = (raw || "").trim().toLowerCase();
+        for (const key of Object.keys(aliases)) {
+            if (aliases[key].some(alias => value.includes(alias))) return key;
+        }
+        return "tomatoes";
+    }
+
+    function russianName(raw) {
+        const key = normalize(raw);
+        return vegetables[key].name;
+    }
+
     function updateVarieties() {
-        const selectedCategory = category.value;
-        const options = varieties[selectedCategory] || [];
+        const category = document.getElementById("plant-category");
+        const select = document.getElementById("plant-variety");
+        if (!category || !select) return;
 
-        variety.replaceChildren();
-
+        select.replaceChildren();
         const placeholder = document.createElement("option");
         placeholder.value = "";
-        placeholder.textContent = options.length
-            ? "Выбери сорт"
-            : "Сначала выбери культуру";
+        placeholder.textContent = category.value ? "Выбери сорт" : "Сначала выбери овощ";
+        select.appendChild(placeholder);
 
-        variety.appendChild(placeholder);
+        if (!category.value) return;
 
-        options.forEach(function (name) {
+        vegetables[normalize(category.value)].varieties.forEach(function (variety) {
             const option = document.createElement("option");
-            option.value = name;
-            option.textContent = name;
-            variety.appendChild(option);
+            option.value = variety;
+            option.textContent = variety;
+            select.appendChild(option);
         });
     }
 
-    category.addEventListener("change", updateVarieties);
+    const categorySelect = document.getElementById("plant-category");
+    if (categorySelect) categorySelect.addEventListener("change", updateVarieties);
     updateVarieties();
+
+    function leaf(x, y, angle, color, scale=1) {
+        return `<g transform="translate(${x} ${y}) rotate(${angle}) scale(${scale})">
+            <path d="M0 0 C-15 -7 -21 -23 -3 -34 C13 -27 17 -11 0 0Z"
+                  fill="${color}" stroke="#456b40" stroke-width="1.2"/>
+            <path d="M0 0 L-2 -28" stroke="#b2c99c" stroke-width="1.2" fill="none"/>
+        </g>`;
+    }
+
+    function tomato() {
+        return `
+        <path d="M150 154 L150 65 M150 104 L123 83 M150 88 L178 70"
+              stroke="#4b7945" stroke-width="5" fill="none" stroke-linecap="round"/>
+        ${leaf(150,128,-50,"#689354",.8)}
+        ${leaf(150,112,50,"#4e7d45",.8)}
+        ${leaf(150,92,-50,"#719b5e",.8)}
+        ${leaf(150,76,45,"#4d7944",.75)}
+        <g fill="#d94f3f" stroke="#a83d32" stroke-width="1.5">
+            <path d="M123 100 L132 96 L140 101 L138 111 Q135 124 125 119 Q115 114 123 100Z"/>
+            <path d="M164 84 L174 80 L183 85 L181 95 Q178 108 168 103 Q158 98 164 84Z"/>
+        </g>
+        <g fill="#47733d">
+            <path d="M128 101 l-7 -8 l9 3 l4 -6 l2 8 l7 2 l-8 3Z"/>
+            <path d="M169 85 l-5 -7 l8 3 l4 -5 l1 7 l7 2 l-8 3Z"/>
+        </g>
+        <g fill="#f5a091"><ellipse cx="126" cy="105" rx="2.5" ry="5"/><ellipse cx="168" cy="89" rx="2.5" ry="4"/></g>`;
+    }
+
+    function cucumber() {
+        return `
+        <path d="M150 154 Q145 125 155 103 Q161 87 176 68"
+              stroke="#4c7943" stroke-width="5" fill="none" stroke-linecap="round"/>
+        ${leaf(151,129,-55,"#58884b",.9)}
+        ${leaf(154,109,55,"#719b5c",.85)}
+        ${leaf(161,89,-55,"#4b7944",.8)}
+        ${leaf(174,71,50,"#71995c",.7)}
+        <g transform="rotate(-12 180 119)">
+            <rect x="171" y="99" width="16" height="48" rx="8" fill="#5f9146" stroke="#416f36" stroke-width="1.5"/>
+            <path d="M175 106 l5 2 M174 115 l5 2 M174 124 l5 2 M175 133 l5 2 M181 104 l4 2 M181 119 l4 2"
+                  stroke="#b6d18b" stroke-width="1.7" stroke-linecap="round"/>
+        </g>`;
+    }
+
+    function pepper() {
+        return `
+        <path d="M150 154 L150 65 M150 102 L125 85 M150 91 L177 73"
+              stroke="#4b7945" stroke-width="5" fill="none" stroke-linecap="round"/>
+        ${leaf(150,126,-55,"#5d8b4d",.8)}
+        ${leaf(150,108,55,"#719b5d",.8)}
+        ${leaf(150,87,-48,"#4d7943",.8)}
+        <path d="M171 99 Q182 94 189 104 Q194 115 188 131 Q183 146 174 139 Q163 130 166 114 Q166 105 171 99Z"
+              fill="#6b984b" stroke="#456d38" stroke-width="1.5"/>
+        <path d="M175 101 Q177 91 184 88" stroke="#47733d" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M173 107 Q179 121 176 135" stroke="#a7c987" stroke-width="1.5" fill="none"/>`;
+    }
+
+    function cabbage() {
+        return `
+        <path d="M150 151 L150 128" stroke="#4d7944" stroke-width="5" fill="none"/>
+        <path d="M150 143 Q112 146 104 117 Q110 94 139 119 Q122 85 148 72 Q170 85 159 117 Q190 91 199 114 Q191 145 150 143Z"
+              fill="#719c5d" stroke="#4c7844" stroke-width="1.5"/>
+        <path d="M150 140 Q117 128 121 105 Q141 102 150 126 Q166 101 184 108 Q184 131 150 140Z"
+              fill="#9abb83" stroke="#5c884b" stroke-width="1.5"/>
+        <path d="M150 138 L125 111 M150 138 L150 83 M150 138 L179 112"
+              stroke="#c6d8ae" stroke-width="2" fill="none"/>`;
+    }
+
+    function carrot() {
+        return `
+        <path d="M150 154 L150 135" stroke="#4d7944" stroke-width="4" fill="none"/>
+        ${leaf(150,141,-52,"#608b51",.65)}
+        ${leaf(150,141,52,"#719b5d",.65)}
+        ${leaf(150,139,-20,"#4e7c46",.6)}
+        ${leaf(150,137,22,"#6b9556",.6)}
+        <path d="M139 143 Q150 138 161 143 L155 163 Q150 180 145 163Z"
+              fill="#e58b3d" stroke="#b96b32" stroke-width="1.5"/>
+        <path d="M143 149 L153 151 M145 156 L151 157 M148 163 L150 164"
+              stroke="#f7bd72" stroke-width="1.5" fill="none"/>`;
+    }
+
+    function beet() {
+        return `
+        <path d="M150 153 L150 130 M150 143 L126 119 M150 141 L174 115"
+              stroke="#4d7944" stroke-width="4" fill="none"/>
+        <path d="M150 143 Q128 139 119 112 Q139 107 150 133 Q147 104 157 91 Q174 111 150 143Z"
+              fill="#59874d" stroke="#426f3b" stroke-width="1.3"/>
+        <path d="M150 140 Q170 136 182 108 Q160 105 150 130Z"
+              fill="#7ca567" stroke="#4f7b43" stroke-width="1.3"/>
+        <path d="M140 149 Q150 143 160 149 Q164 160 157 168 Q153 175 150 178 Q147 174 143 168 Q136 160 140 149Z"
+              fill="#b65068" stroke="#873d50" stroke-width="1.5"/>
+        <path d="M150 153 Q148 163 150 174" stroke="#e39aa7" stroke-width="1.4" fill="none"/>`;
+    }
+
+    function potato() {
+        return `
+        <path d="M150 154 L150 112 L132 89 M150 126 L173 101"
+              stroke="#4d7944" stroke-width="5" fill="none" stroke-linecap="round"/>
+        ${leaf(132,91,-50,"#608a50",.8)}
+        ${leaf(173,103,48,"#729b5d",.8)}
+        ${leaf(150,115,-45,"#4d7a44",.8)}
+        ${leaf(150,105,45,"#699255",.8)}
+        <g fill="#c7a06a" stroke="#9e7c4f" stroke-width="1.5">
+            <ellipse cx="136" cy="163" rx="10" ry="6"/>
+            <ellipse cx="158" cy="168" rx="9" ry="6"/>
+            <ellipse cx="177" cy="161" rx="8" ry="5"/>
+        </g>
+        <g fill="#876743"><circle cx="134" cy="162" r="1.4"/><circle cx="159" cy="166" r="1.4"/><circle cx="178" cy="160" r="1.4"/></g>`;
+    }
+
+    function pumpkin() {
+        return `
+        <path d="M150 154 Q148 126 151 112 Q164 99 179 105"
+              stroke="#4c7943" stroke-width="5" fill="none" stroke-linecap="round"/>
+        ${leaf(151,128,-60,"#58834a",.9)}
+        ${leaf(156,115,52,"#719b5c",.9)}
+        ${leaf(176,106,65,"#4e7945",.75)}
+        ${leaf(138,112,-95,"#6c9558",.75)}
+        <path d="M175 120 C163 116 154 124 156 136 C156 148 167 153 176 147 C186 153 197 145 195 134 C195 122 185 117 175 120Z"
+              fill="#e58c3c" stroke="#b96c2e" stroke-width="1.5"/>
+        <path d="M175 122 Q168 135 176 147 M175 122 Q184 133 176 147 M162 126 Q168 137 166 145"
+              fill="none" stroke="#bd702f" stroke-width="1.5"/>
+        <path d="M174 121 L175 114" stroke="#4c7541" stroke-width="5" stroke-linecap="round"/>`;
+    }
+
+    const drawings = {
+        tomatoes: tomato,
+        cucumbers: cucumber,
+        pepper: pepper,
+        cabbage: cabbage,
+        carrot: carrot,
+        beet: beet,
+        potato: potato,
+        pumpkin: pumpkin
+    };
+
+    function renderPlant(element) {
+        const key = normalize(element.dataset.category);
+        const drawing = drawings[key] || tomato;
+
+        element.innerHTML = `
+            <svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg"
+                 aria-hidden="true" focusable="false">
+                <g class="plant-drawing">${drawing()}</g>
+                <ellipse cx="150" cy="157" rx="60" ry="5" fill="#5d6145" opacity=".12"/>
+                <path d="M20 155 Q150 139 280 155 L269 181 Q150 192 31 181Z" fill="#987858"/>
+                <path d="M20 155 Q150 139 280 155 Q150 171 20 155Z" fill="#6f553e"/>
+                <path d="M47 155 Q150 144 253 155 Q150 164 47 155Z" fill="#b18d66" opacity=".7"/>
+            </svg>`;
+    }
+
+    function translateCategories(root) {
+        root.querySelectorAll(".garden-plant-category, .category-russian").forEach(function (element) {
+            element.textContent = russianName(element.textContent);
+        });
+    }
+
+    document.querySelectorAll(".real-plant-art").forEach(renderPlant);
+    translateCategories(document);
+
+    const folderButton = document.getElementById("open-plant-folder");
+    const folderContent = document.getElementById("plant-folder-content");
+    const closeButton = document.getElementById("close-plant-folder");
+    const folderList = document.getElementById("plant-folder-list");
+    const sourceCards = document.getElementById("all-plant-cards");
+    const detailView = document.getElementById("plant-detail-view");
+    const selectedContainer = document.getElementById("selected-plant-container");
+    const backButton = document.getElementById("back-to-plant-folder");
+
+    function setFolderOpen(open) {
+        if (!folderContent) return;
+        folderContent.hidden = !open;
+
+        if (folderButton) {
+            folderButton.setAttribute("aria-expanded", String(open));
+        }
+    }
+
+    function showFolder() {
+        setFolderOpen(true);
+        if (detailView) detailView.hidden = true;
+        if (selectedContainer) selectedContainer.replaceChildren();
+    }
+
+    function openPlant(card) {
+        if (!card || !selectedContainer || !detailView) return;
+
+        const clone = card.cloneNode(true);
+        selectedContainer.replaceChildren(clone);
+
+        translateCategories(selectedContainer);
+        selectedContainer.querySelectorAll(".real-plant-art").forEach(renderPlant);
+
+        detailView.hidden = false;
+        setFolderOpen(false);
+        detailView.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+
+    if (folderButton) {
+        folderButton.addEventListener("click", function () {
+            if (folderContent && folderContent.hidden) {
+                showFolder();
+                folderContent.scrollIntoView({ behavior:"smooth", block:"start" });
+            } else {
+                setFolderOpen(false);
+            }
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener("click", function () {
+            setFolderOpen(false);
+        });
+    }
+
+    if (backButton) {
+        backButton.addEventListener("click", function () {
+            if (detailView) detailView.hidden = true;
+            if (selectedContainer) selectedContainer.replaceChildren();
+            showFolder();
+            if (folderContent) {
+                folderContent.scrollIntoView({ behavior:"smooth", block:"start" });
+            }
+        });
+    }
+
+    if (folderList && sourceCards) {
+        sourceCards.querySelectorAll(".garden-plant-card").forEach(function (card) {
+            const name = card.dataset.plantName || "Растение";
+            const category = russianName(card.dataset.plantCategory);
+            const stage = card.dataset.plantStage || "Росток";
+
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "plant-folder-item";
+
+            const icon = document.createElement("span");
+            icon.className = "plant-folder-item-icon";
+            icon.textContent = vegetables[normalize(card.dataset.plantCategory)].emoji;
+
+            const info = document.createElement("span");
+            info.className = "plant-folder-item-info";
+
+            const title = document.createElement("span");
+            title.className = "plant-folder-item-name";
+            title.textContent = name;
+
+            const meta = document.createElement("span");
+            meta.className = "plant-folder-item-meta";
+            meta.textContent = category + " · " + stage;
+
+            info.append(title, meta);
+            item.append(icon, info);
+            item.addEventListener("click", function () {
+                openPlant(card);
+            });
+
+            folderList.appendChild(item);
+        });
+    }
 });
 </script>
 {% endblock %}

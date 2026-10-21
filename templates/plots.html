@@ -6,27 +6,60 @@
 <div class="garden-page">
 
     <section class="garden-hero">
-        <div class="garden-badge">MY GARDEN / УЧАСТКИ</div>
+        <span class="garden-badge">MY GARDEN / УЧАСТКИ</span>
         <h1>Мои участки</h1>
-        <p>Создавай свой сад, сохраняй участки и планируй посадки.</p>
-        <a class="garden-button garden-button-light"
-           href="{{ url_for('main.profile') }}">
-            В личный кабинет
-        </a>
+        <p>
+            Собирай свой сад по частям: сохраняй участки, планируй посадки
+            и переходи к управлению растениями.
+        </p>
+
+        <div class="garden-navigation">
+            <a class="garden-button garden-button-light"
+               href="{{ url_for('main.profile') }}">
+                Личный кабинет
+            </a>
+            <a class="garden-button garden-button-light"
+               href="{{ url_for('main.plants') }}">
+                Мои растения
+            </a>
+            <a class="garden-button garden-button-light"
+               href="{{ url_for('main.orders') }}">
+                Мои заказы
+            </a>
+        </div>
     </section>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-            <p class="message {{ category }}">{{ message }}</p>
+            <div class="message {{ category }}" role="status">
+                {{ message }}
+            </div>
         {% endfor %}
     {% endwith %}
 
-    <section class="garden-panel">
+    <section class="garden-summary">
+        <div class="summary-card">
+            <span>Сохранённые участки</span>
+            <strong>{{ plots|length }}</strong>
+            <small>В твоём кабинете</small>
+        </div>
+
+        <div class="summary-card">
+            <span>Общая площадь</span>
+            <strong>
+                {{ "%.2f"|format(plots|sum(attribute='area')) }} м²
+            </strong>
+            <small>По всем сохранённым участкам</small>
+        </div>
+    </section>
+
+    <section class="garden-panel" id="add-plot">
         <div class="garden-panel-heading">
-            <span class="garden-pixel-icon">▦</span>
+            <div class="garden-heading-icon">＋</div>
             <div>
+                <span class="garden-eyebrow">НОВОЕ МЕСТО</span>
                 <h2>Добавить участок</h2>
-                <p>Создай место для своего будущего урожая.</p>
+                <p>Укажи название, площадь и, если нужно, описание участка.</p>
             </div>
         </div>
 
@@ -34,94 +67,592 @@
               method="POST"
               action="{{ url_for('main.plots') }}">
 
-            <label for="name">Название участка</label>
-            <input
-                id="name"
-                name="name"
-                type="text"
-                maxlength="100"
-                placeholder="Например, Дачный участок"
-                required
-            >
+            <div class="form-field">
+                <label for="name">Название участка</label>
+                <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    maxlength="100"
+                    placeholder="Например, Дачный участок"
+                    autocomplete="off"
+                    required
+                >
+                <small>Придумай короткое название, чтобы легко находить участок.</small>
+            </div>
 
-            <label for="area">Площадь, м²</label>
-            <input
-                id="area"
-                name="area"
-                type="number"
-                min="0.01"
-                max="1000000"
-                step="any"
-                placeholder="Например, 120"
-                required
-            >
+            <div class="form-field">
+                <label for="area">Площадь, м²</label>
+                <input
+                    id="area"
+                    name="area"
+                    type="number"
+                    min="0.01"
+                    max="1000000"
+                    step="any"
+                    inputmode="decimal"
+                    placeholder="Например, 120"
+                    required
+                >
+                <small>Укажи положительное число в квадратных метрах.</small>
+            </div>
 
-            <label for="description">Описание</label>
-            <textarea
-                id="description"
-                name="description"
-                rows="3"
-                maxlength="1000"
-                placeholder="Что планируешь выращивать?"
-            ></textarea>
+            <div class="form-field">
+                <label for="description">Описание <span>(необязательно)</span></label>
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="3"
+                    maxlength="1000"
+                    placeholder="Например, солнечное место для овощей и зелени"
+                ></textarea>
+            </div>
 
             <button class="garden-button" type="submit">
-                + Добавить участок
+                Добавить участок <span aria-hidden="true">→</span>
             </button>
         </form>
     </section>
 
-    <div class="garden-section-heading">
-        <div>
-            <span class="garden-eyebrow">ТВОЯ ЗЕМЛЯ</span>
-            <h2>Мои сохранённые участки</h2>
+    <section class="saved-plots">
+        <div class="garden-section-heading">
+            <div>
+                <span class="garden-eyebrow">ТВОЯ ЗЕМЛЯ</span>
+                <h2>Сохранённые участки</h2>
+                <p>Каждый участок можно использовать для планирования посадок и заказа обслуживания.</p>
+            </div>
+            <span class="garden-count">{{ plots|length }}</span>
         </div>
-        <span class="garden-count">{{ plots|length }}</span>
-    </div>
 
-    {% if plots %}
-        <div class="garden-grid">
-            {% for plot in plots %}
-                <section class="garden-plot-card">
-                    <div class="garden-plot-top">
-                        <span class="garden-plot-icon"></span>
-                        <span class="garden-plot-label">МОЙ УЧАСТОК</span>
-                    </div>
+        {% if plots %}
+            <div class="garden-grid">
+                {% for plot in plots %}
+                    <article class="garden-plot-card">
+                        <div class="garden-plot-top">
+                            <span class="garden-plot-icon" aria-hidden="true">⌂</span>
+                            <span class="garden-plot-label">УЧАСТОК {{ loop.index }}</span>
+                        </div>
 
-                    <h3>{{ plot.name }}</h3>
+                        <h3>{{ plot.name }}</h3>
 
-                    <div class="garden-area">
-                        <span>ПЛОЩАДЬ</span>
-                        <strong>{{ plot.area }} м²</strong>
-                    </div>
+                        <div class="garden-area">
+                            <span>ПЛОЩАДЬ</span>
+                            <strong>{{ "%.2f"|format(plot.area) }} м²</strong>
+                        </div>
 
-                    <p class="garden-description">
-                        {% if plot.description %}
-                            {{ plot.description }}
-                        {% else %}
-                            Описание пока не добавлено.
-                        {% endif %}
-                    </p>
+                        <div class="garden-description">
+                            {% if plot.description %}
+                                {{ plot.description }}
+                            {% else %}
+                                <span class="muted-description">
+                                    Описание пока не добавлено.
+                                </span>
+                            {% endif %}
+                        </div>
 
-                    <form
-                        method="POST"
-                        action="{{ url_for('main.delete_plot', plot_id=plot.id) }}"
-                        onsubmit="return confirm('Точно удалить этот участок?');"
-                    >
-                        <button class="garden-delete" type="submit">
-                            Удалить участок
-                        </button>
-                    </form>
-                </section>
-            {% endfor %}
-        </div>
-    {% else %}
-        <section class="garden-empty">
-            <div class="garden-empty-icon">🌿</div>
-            <h3>Твой сад пока пуст</h3>
-            <p>Добавь первый участок, и здесь появится его карточка.</p>
-        </section>
-    {% endif %}
+                        <div class="plot-actions">
+                            <a class="plot-action-link"
+                               href="{{ url_for('main.plants') }}">
+                                Растения <span aria-hidden="true">→</span>
+                            </a>
+
+                            <a class="plot-action-link"
+                               href="{{ url_for('main.orders') }}">
+                                Заказать уход <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
+
+                        <form
+                            class="delete-plot-form"
+                            method="POST"
+                            action="{{ url_for('main.delete_plot', plot_id=plot.id) }}"
+onsubmit="return confirm('Точно удалить этот участок?');"
+                        >
+                            <button class="garden-delete" type="submit">
+                                Удалить участок
+                            </button>
+                        </form>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <section class="garden-empty">
+                <div class="garden-empty-icon" aria-hidden="true">⌂</div>
+                <h3>Твой сад пока пуст</h3>
+                <p>
+                    Добавь первый участок. После этого сможешь перейти к растениям
+                    и оформлению заказа на обслуживание.
+                </p>
+                <a class="garden-button" href="#add-plot">
+                    Создать первый участок
+                </a>
+            </section>
+        {% endif %}
+    </section>
 
 </div>
+
+<style>
+.garden-page {
+    width: min(100% - 32px, 1000px);
+    margin: 0 auto;
+    padding: 36px 0 64px;
+    color: #29382c;
+}
+
+.garden-hero {
+    margin-bottom: 26px;
+}
+
+.garden-badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #71836a;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.garden-hero h1 {
+    margin: 0 0 12px;
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 600;
+    letter-spacing: -1px;
+}
+
+.garden-hero > p {
+    max-width: 650px;
+    margin: 0;
+    color: #778075;
+    line-height: 1.7;
+}
+
+.garden-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.garden-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 13px 19px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #526b4d;
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.garden-button:hover {
+    background: #3e563a;
+}
+
+.garden-button-light {
+    border-color: #dfe4d8;
+    background: #fffefa;
+    color: #526b4d;
+}
+
+.garden-button-light:hover {
+    border-color: #b9c5b0;
+    background: #f4f6ef;
+    color: #3e563a;
+}
+
+.garden-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 24px 0;
+}
+
+.summary-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 21px;
+    border: 1px solid #e5e8df;
+    border-radius: 16px;
+    background: #f8f8f2;
+}
+
+.summary-card > span {
+    color: #71806b;
+    font-size: 13px;
+}
+
+.summary-card strong {
+    font-size: clamp(23px, 3vw, 30px);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.summary-card small {
+    color: #899083;
+    font-size: 12px;
+}
+
+.garden-panel {
+    margin: 26px 0 42px;
+    padding: clamp(20px, 4vw, 32px);
+    border: 1px solid #e5e8df;
+    border-radius: 20px;
+    background: #fffefa;
+}
+
+.garden-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 25px;
+}
+
+.garden-heading-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 12px;
+    background: #edf1e7;
+    color: #526b4d;
+    font-size: 25px;
+}
+
+.garden-eyebrow {
+    color: #849078;
+    font-size: 11px;
+    letter-spacing: 1.7px;
+}
+
+.garden-panel-heading h2,
+.garden-section-heading h2 {
+    margin: 7px 0 8px;
+    font-size: 23px;
+    font-weight: 600;
+}
+
+.garden-panel-heading p,
+.garden-section-heading p {
+    margin: 0;
+    color: #778075;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.garden-form {
+    display: grid;
+    gap: 20px;
+}
+
+.form-field {
+    display: grid;
+    gap: 8px;
+}
+
+.form-field label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.form-field label span {
+    color: #899083;
+    font-weight: 400;
+}
+
+.form-field input,
+.form-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 14px;
+    border: 1px solid #d9dfd3;
+    border-radius: 10px;
+    outline: none;
+    background: #fff;
+    color: #29382c;
+    font: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+    border-color: #81977a;
+    box-shadow: 0 0 0 3px rgba(82, 107, 77, 0.1);
+}
+
+.form-field textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.form-field small {
+    color: #899083;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.garden-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.garden-count {
+    display: grid;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 7px;
+    box-sizing: border-box;
+    place-items: center;
+    border: 1px solid #e0e5d9;
+    border-radius: 12px;
+    background: #f5f6ef;
+    color: #526b4d;
+    font-weight: 600;
+}
+
+.garden-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.garden-plot-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 22px;
+    border: 1px solid #e5e8df;
+    border-radius: 16px;
+    background: #fffefa;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.garden-plot-card:hover {
+    border-color: #cbd5c3;
+    transform: translateY(-2px);
+}
+
+.garden-plot-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.garden-plot-icon {
+    display: grid;
+    width: 37px;
+    height: 37px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 11px;
+    background: #edf1e7;
+    color: #526b4d;
+    font-size: 23px;
+}
+
+.garden-plot-label {
+    color: #849078;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+}
+
+.garden-plot-card h3 {
+    margin: 18px 0 14px;
+    font-size: 20px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.garden-area {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 11px;
+    background: #f5f5ed;
+}
+
+.garden-area span {
+    color: #849078;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+}
+
+.garden-area strong {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.garden-description {
+    min-height: 45px;
+    margin: 15px 0;
+    color: #667161;
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.muted-description {
+    color: #92998d;
+    font-style: italic;
+}
+
+.plot-actions {
+    display: grid;
+    gap: 0;
+    margin-top: auto;
+    border-top: 1px solid #e7e9e1;
+}
+
+.plot-action-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e7e9e1;
+    color: #526b4d;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.plot-action-link:hover {
+    color: #30482d;
+}
+
+.delete-plot-form {
+    margin-top: 13px;
+}
+
+.garden-delete {
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    color: #9b7468;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.garden-delete:hover {
+    color: #854c40;
+    text-decoration: underline;
+}
+
+.garden-empty {
+    padding: 36px 18px;
+    border: 1px dashed #dce2d5;
+    border-radius: 16px;
+    background: #fafaf5;
+    text-align: center;
+}
+
+.garden-empty-icon {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    place-items: center;
+    border-radius: 16px;
+    background: #edf1e7;
+    color: #526b4d;
+    font-size: 27px;
+}
+
+.garden-empty h3 {
+    margin: 0 0 9px;
+    font-size: 19px;
+}
+
+.garden-empty p {
+    max-width: 430px;
+    margin: 0 auto 20px;
+    color: #778075;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.message {
+    margin: 14px 0;
+    padding: 13px 15px;
+    border: 1px solid #e5e8df;
+    border-radius: 10px;
+    background: #f4f5ed;
+    color: #52614d;
+    line-height: 1.6;
+}
+
+.message.error,
+.message.danger {
+    border-color: #ead5ce;
+    background: #fbf0ec;
+    color: #8a5144;
+}
+
+.message.success {
+    border-color: #dce7d5;
+    background: #eff5ea;
+    color: #4c7147;
+}
+
+@media (max-width: 650px) {
+    .garden-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .summary-card {
+        padding: 17px;
+    }
+
+    .garden-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .garden-navigation {
+        gap: 8px;
+    }
+
+    .garden-navigation .garden-button {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 380px) {
+    .garden-page {
+        width: calc(100% - 22px);
+        padding-top: 25px;
+    }
+
+    .garden-panel {
+        padding: 17px 14px;
+    }
+
+    .garden-plot-card {
+        padding: 17px;
+    }
+
+    .garden-navigation .garden-button {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}

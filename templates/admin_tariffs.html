@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Тарифы и семена | My Garden{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <section class="admin-hero">
+        <span class="admin-badge">MY GARDEN / ADMIN</span>
+        <h1>Тарифы и цены</h1>
+        <p>Управление стоимостью обслуживания участков и ценами семян.</p>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="admin-alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <section class="admin-card">
+        <h2>Тарифы обслуживания</h2>
+        <p class="admin-muted">
+            Стоимость работ, материалов и воды указывается за один квадратный метр.
+        </p>
+
+        <form method="POST" class="admin-form">
+            <input type="hidden" name="action" value="save_tariffs">
+
+            <label for="area_rate">Работы сотрудников, ₽/м²</label>
+            <input id="area_rate" name="area_rate" type="number"
+                   min="0" step="0.01" required
+                   value="{{ tariffs.area_rate }}">
+
+            <label for="materials_rate">Материалы, ₽/м²</label>
+            <input id="materials_rate" name="materials_rate" type="number"
+                   min="0" step="0.01" required
+                   value="{{ tariffs.materials_rate }}">
+
+            <label for="water_rate">Вода, ₽/м²</label>
+            <input id="water_rate" name="water_rate" type="number"
+                   min="0" step="0.01" required
+                   value="{{ tariffs.water_rate }}">
+
+            <label for="minimum_harvest_percent">Минимальная доля урожая, %</label>
+            <input id="minimum_harvest_percent"
+                   name="minimum_harvest_percent"
+                   type="number" min="0" max="100" step="0.01"
+                   required value="{{ tariffs.minimum_harvest_percent }}">
+
+            <button class="admin-button" type="submit">Сохранить тарифы</button>
+        </form>
+    </section>
+
+    <section class="admin-card">
+        <h2>Цены семян</h2>
+        <p class="admin-muted">
+            Укажи реальную закупочную цену одной семечки или единицы,
+            которая используется в расчётах твоего проекта.
+        </p>
+
+        <form method="POST" class="admin-form">
+            <input type="hidden" name="action" value="save_seed_price">
+
+            <label for="culture">Название культуры</label>
+            <input id="culture" name="culture" type="text"
+                   placeholder="Например, томат" required>
+
+            <label for="price_per_seed">Цена одной семечки, ₽</label>
+            <input id="price_per_seed" name="price_per_seed"
+                   type="number" min="0" step="0.01" required
+                   placeholder="Например, 2.50">
+
+            <button class="admin-button" type="submit">Добавить или обновить цену</button>
+        </form>
+
+        <div class="seed-list">
+            {% if seed_prices %}
+                {% for seed in seed_prices %}
+                    <div class="seed-row">
+                        <div>
+                            <strong>{{ seed.culture }}</strong>
+                            <span>{{ "%.2f"|format(seed.price_per_seed) }} ₽ за семечку</span>
+                        </div>
+
+                        <form method="POST" class="seed-delete"
+                              onsubmit="return confirm('Удалить цену для этой культуры?');">
+                            <input type="hidden" name="action" value="delete_seed_price">
+                            <input type="hidden" name="culture" value="{{ seed.culture }}">
+                            <button type="submit" class="delete-button">Удалить</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Цены пока не добавлены.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+.admin-page {
+    width: min(100% - 32px, 900px);
+    margin: 0 auto;
+    padding: 36px 0 64px;
+    color: #29382c;
+}
+.admin-hero {
+    margin-bottom: 28px;
+}
+.admin-badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #71836a;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+.admin-hero h1 {
+    margin: 0 0 12px;
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 600;
+}
+.admin-hero p,
+.admin-muted {
+    color: #778075;
+    line-height: 1.7;
+}
+.admin-card {
+    margin: 22px 0;
+    padding: clamp(20px, 4vw, 32px);
+    border: 1px solid #e5e8df;
+    border-radius: 20px;
+    background: #fffefa;
+}
+.admin-card h2 {
+    margin-top: 0;
+    font-size: 23px;
+}
+.admin-form {
+    display: grid;
+    gap: 11px;
+    margin-top: 20px;
+}
+.admin-form label {
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.admin-form input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 13px;
+    border: 1px solid #d9dfd3;
+    border-radius: 10px;
+    background: white;
+    color: #29382c;
+    font: inherit;
+}
+.admin-button {
+    width: fit-content;
+    margin-top: 10px;
+    padding: 13px 20px;
+    border: 0;
+    border-radius: 10px;
+    background: #526b4d;
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.admin-button:hover {
+    background: #3e563a;
+}
+.seed-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 24px;
+}
+.seed-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 14px;
+    border: 1px solid #e5e8df;
+    border-radius: 12px;
+}
+.seed-row > div {
+    display: grid;
+    gap: 5px;
+}
+.seed-row span {
+    color: #778075;
+    font-size: 14px;
+}
+.seed-delete {
+    flex-shrink: 0;
+}
+.delete-button {
+    padding: 8px 11px;
+    border: 1px solid #e1d4ce;
+    border-radius: 8px;
+    background: #fff8f5;
+    color: #945b4d;
+    cursor: pointer;
+}
+.admin-alert {
+    margin: 16px 0;
+    padding: 14px;
+    border-radius: 10px;
+    background: #f4f5ed;
+}
+@media (max-width: 500px) {
+    .seed-row {
+        align-items: flex-start;
+    }
+}
+</style>
+{% endblock %}

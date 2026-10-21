@@ -1,8 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{% block title %}My Garden{% endblock %}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +13,7 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <header class="site-header">
         <a class="logo pixel-text" href="{{ url_for('main.index') }}">
@@ -19,7 +22,29 @@
 
         <nav class="pixel-nav">
             <a href="{{ url_for('main.index') }}">Главная</a>
-            <a href="{{ url_for('main.login') }}">Личный кабинет</a>
+
+            {% if session.get('user_id') %}
+
+                <a href="{{ url_for('main.profile') }}">Личный кабинет</a>
+                <a href="{{ url_for('main.plots') }}">Мои участки</a>
+                <a href="{{ url_for('main.plants') }}">Мои растения</a>
+
+                {% if session.get('role') in ['employee', 'admin'] %}
+                    <a href="{{ url_for('main.plants') }}">Рабочая панель</a>
+                {% endif %}
+
+                {% if session.get('role') == 'admin' %}
+                    <a href="{{ url_for('main.admin_users') }}">Управление пользователями</a>
+                {% endif %}
+
+                <a href="{{ url_for('main.logout') }}">Выйти</a>
+
+            {% else %}
+
+                <a href="{{ url_for('main.login') }}">Войти</a>
+                <a href="{{ url_for('main.register') }}">Регистрация</a>
+
+            {% endif %}
         </nav>
     </header>
 
@@ -30,7 +55,7 @@
     <footer class="site-footer">
         <p>
             <span class="pixel-text">My Garden</span>
-            — проект находится в разработке
+            - проект находится в разработке
         </p>
     </footer>
 </body>
